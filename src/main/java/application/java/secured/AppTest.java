@@ -9,6 +9,7 @@
 
 package application.java.secured;
 
+import application.java.Config;
 import application.java.model.BloodPrivate;
 import application.java.model.BloodPublic;
 import com.google.gson.Gson;
@@ -25,7 +26,7 @@ import java.util.Map;
 import java.util.Random;
 
 
-public class AppTransfer {
+public class AppTest {
 
 	static {
 		System.setProperty("org.hyperledger.fabric.sdk.service_discovery.as_localhost", "true");
@@ -48,7 +49,7 @@ public class AppTransfer {
 		String salt =Long.toHexString(Double.doubleToLongBits(Math.random()));
 		String tradeId = Long.toHexString(Double.doubleToLongBits(Math.random()));
 		byte[] result;
-		String assetId = "asset103";
+		String assetId = "asset103120";
 		BloodPrivate bloodPrivate = new BloodPrivate(assetId, "AB", 500, "Mr.A", salt);
 		BloodPublic bloodPublic = new BloodPublic(assetId, tradeId);
 		String asset_properties = new Gson().toJson(bloodPrivate);
@@ -58,7 +59,7 @@ public class AppTransfer {
 		try (Gateway gateway = connectORG(1)) {
 			// get the network and contract
 			Network network = gateway.getNetwork("mychannel");
-			Contract contract = network.getContract("secured");
+			Contract contract = network.getContract(Config.CHAINCODE_NAME);
 
 			transientMap.put("asset_properties", asset_properties.getBytes(StandardCharsets.UTF_8));
 			t = contract.createTransaction("CreateAsset");
@@ -94,7 +95,7 @@ public class AppTransfer {
 
 		try (Gateway gateway = connectORG(2)) {
 			Network network = gateway.getNetwork("mychannel");
-			Contract contract = network.getContract("secured");
+			Contract contract = network.getContract(Config.CHAINCODE_NAME);
 			System.out.println("---------------------------------------");
 			try {
 				t = contract.createTransaction("VerifyAssetProperties");
@@ -133,7 +134,7 @@ public class AppTransfer {
 
 		try (Gateway gateway = connectORG(1)) {
 			Network network = gateway.getNetwork("mychannel");
-			Contract contract = network.getContract("secured");
+			Contract contract = network.getContract(Config.CHAINCODE_NAME);
 			bloodPublic.setPrice(100);
 			asset_price = new Gson().toJson(bloodPublic);
 			try{
@@ -164,7 +165,7 @@ public class AppTransfer {
 
 		try (Gateway gateway = connectORG(2)) {
 			Network network = gateway.getNetwork("mychannel");
-			Contract contract = network.getContract("secured");
+			Contract contract = network.getContract(Config.CHAINCODE_NAME);
 			System.out.println("---------------------------------------");
 			try {
 				t = contract.createTransaction("ChangePublicDescription");
@@ -178,6 +179,40 @@ public class AppTransfer {
 		}catch(Exception e){
 			System.err.println(e);
 		}
+		try (Gateway gateway = connectORG(1)) {
+			// get the network and contract
+			Network network = gateway.getNetwork("mychannel");
+			Contract contract = network.getContract(Config.CHAINCODE_NAME);
 
+			transientMap.put("asset_properties", asset_properties.getBytes(StandardCharsets.UTF_8));
+			t = contract.createTransaction("CreateAsset");
+			t.setTransient(transientMap);
+			t.submit(assetId, "Asset id is for sale");
+			System.out.println("---------------------------------------");
+			System.out.println("\n");
+			result = contract.evaluateTransaction("GetAssetPrivateProperties", assetId);
+			System.out.println("Original: " + result);
+			System.out.println("String: " + result.toString());
+			BloodPrivate b = new Gson().fromJson(new String(result, StandardCharsets.UTF_8), BloodPrivate.class);
+			System.out.println("PRIVATE : " + new Gson().toJson(b));
+
+			System.out.println("\n");
+			result = contract.evaluateTransaction("ReadAsset", assetId);
+			System.out.println("Public: " + new String(result, StandardCharsets.UTF_8));
+
+
+			System.out.println("---------------------------------------");
+			t = contract.createTransaction("AgreeToSell");
+			transientMap = new HashMap<>();
+			bloodPublic.setPrice(100);
+			asset_price = new Gson().toJson(bloodPublic);
+			transientMap.put("asset_price", asset_price.getBytes(StandardCharsets.UTF_8));
+			t.setTransient(transientMap);
+			t.submit(assetId);
+			result = contract.evaluateTransaction("GetAssetSalesPrice", assetId);
+			System.out.println("PUBLIC Get Asset Sales Price: " + new String(result, StandardCharsets.UTF_8));
+		}catch(Exception e){
+			System.err.println(e);
+		}
 	}
 }

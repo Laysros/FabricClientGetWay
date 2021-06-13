@@ -20,24 +20,30 @@ import java.nio.file.Paths;
 import java.util.Properties;
 
 public class EnrollAdmin {
-
-	//private static String ORG = "1";
-	private static String ORG = "2";
-	//private static String CAHOSTPORT = "7054";
-	private static String CAHOSTPORT = "8054";
-	//private static String MSP = "Org1MSP";
-	private static String MSP = "Org2MSP";
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) {
+		try {
+			main(1);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	public static void main(int ID) throws Exception {
+		//ID = 2;//1,,2
+		String CAHOSTPORTs[] = {"7054", "8054"};
+		String MSPs[] = {"Org1MSP", "Org2MSP"};
+		String CAHOSTPORT = CAHOSTPORTs[ID-1];
+		String MSP = MSPs[ID-1];
+		String USERNAME = "appUser" + ID;
 		// Create a CA client for interacting with the CA.
 		Properties props = new Properties();
-		props.put("pemFile","../../test-network/organizations/peerOrganizations/org"+ ORG +".example.com/ca/ca.org" + ORG + ".example.com-cert.pem");
+		props.put("pemFile","../../test-network/organizations/peerOrganizations/org"+ ID +".example.com/ca/ca.org" + ID + ".example.com-cert.pem");
 		props.put("allowAllHostNames", "true");
 		HFCAClient caClient = HFCAClient.createNewInstance("https://localhost:" + CAHOSTPORT, props);
 		CryptoSuite cryptoSuite = CryptoSuiteFactory.getDefault().getCryptoSuite();
 		caClient.setCryptoSuite(cryptoSuite);
 
 		// Create a wallet for managing identities
-		Wallet wallet = Wallets.newFileSystemWallet(Paths.get("wallet/org"+ ORG));
+		Wallet wallet = Wallets.newFileSystemWallet(Paths.get("wallet/org"+ ID));
 
 		// Check to see if we've already enrolled the admin user.
 		if (wallet.get("admin") != null) {

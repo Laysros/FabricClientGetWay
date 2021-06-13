@@ -9,6 +9,7 @@
 
 package application.java.secured;
 
+import application.java.Config;
 import application.java.model.BloodPrivate;
 import application.java.model.BloodPublic;
 import com.google.gson.Gson;
@@ -38,17 +39,17 @@ public class AppUpdate {
 		Path networkConfigPath = Paths.get("..", "..", "test-network", "organizations", "peerOrganizations", "org"+ org +".example.com", "connection-org"+ org +".yaml");
 
 		Gateway.Builder builder = Gateway.createBuilder();
-		builder.identity(wallet, "appUser2"+ org).networkConfig(networkConfigPath).discovery(true);
+		builder.identity(wallet, "appUser"+ org).networkConfig(networkConfigPath).discovery(true);
 		return builder.connect();
 	}
 
 	public static void main(String[] args) throws Exception {
 		byte[] result;
-		String assetId = "asset103";
+		String assetId = "asset1031";
 		Transaction t;
 		try (Gateway gateway = connectORG(2)) {
 			Network network = gateway.getNetwork("mychannel");
-			Contract contract = network.getContract("secured");
+			Contract contract = network.getContract(Config.CHAINCODE_NAME);
 			System.out.println("---------------------------------------");
 			try {
 				t = contract.createTransaction("ChangePublicDescription");

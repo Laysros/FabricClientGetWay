@@ -9,6 +9,7 @@
 
 package application.java.secured;
 
+import application.java.Config;
 import org.hyperledger.fabric.gateway.*;
 
 import java.nio.file.Path;
@@ -20,16 +21,16 @@ public class AppRead {
 	static {
 		System.setProperty("org.hyperledger.fabric.sdk.service_discovery.as_localhost", "true");
 	}
-	public static String ORG = "2";
-	public static String USERNAME = "appUser2";
-
+	public static String ID = "1";
+	public static String USERNAME = "appUser" + ID;
+	public static String assetId = "asset104";
 	// helper function for getting connected to the gateway
 	public static Gateway connect() throws Exception{
 		// Load a file system based wallet for managing identities.
-		Path walletPath = Paths.get("wallet/org"+ ORG);
+		Path walletPath = Paths.get("wallet/org"+ ID);
 		Wallet wallet = Wallets.newFileSystemWallet(walletPath);
 		// load a CCP
-		Path networkConfigPath = Paths.get("..", "..", "test-network", "organizations", "peerOrganizations", "org"+ ORG +".example.com", "connection-org"+ ORG +".yaml");
+		Path networkConfigPath = Paths.get("..", "..", "test-network", "organizations", "peerOrganizations", "org"+ ID +".example.com", "connection-org"+ ID +".yaml");
 		Gateway.Builder builder = Gateway.createBuilder();
 		builder.identity(wallet, USERNAME).networkConfig(networkConfigPath).discovery(true);
 		return builder.connect();
@@ -40,11 +41,11 @@ public class AppRead {
 		try (Gateway gateway = connect()) {
 			// get the network and contract
 			Network network = gateway.getNetwork("mychannel");
-			Contract contract = network.getContract("basic");
+			Contract contract = network.getContract(Config.CHAINCODE_NAME);
 			byte[] result;
 			System.out.println("\n");
-			result = contract.evaluateTransaction("GetAllAssets");
-			System.out.println("Evaluate Transaction: GetAllAssets, result: " + new String(result));
+			result = contract.evaluateTransaction("ReadAsset", assetId);
+			System.out.println("Evaluate Transaction: ReadAsset, result: " + new String(result));
 		}
 		catch(Exception e){
 			System.err.println(e);

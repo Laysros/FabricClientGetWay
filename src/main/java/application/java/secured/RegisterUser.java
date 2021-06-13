@@ -22,23 +22,23 @@ import org.hyperledger.fabric_ca.sdk.HFCAClient;
 import org.hyperledger.fabric_ca.sdk.RegistrationRequest;
 
 public class RegisterUser {
-	//private static String ORG = "1";
-	private static String ORG = "2";
-	//private static String CAHOSTPORT = "7054";
-	private static String CAHOSTPORT = "8054";
-	private static String MSP = "Org" + ORG + "MSP";
-	private static String USERNAME = "appUser22";
-	public static void main(String[] args) throws Exception {
+	//private int ID = 2;//1,2
 
+	public static void main(int ID) throws Exception {
+		String CAHOSTPORTs[] = {"7054", "8054"};
+		String MSPs[] = {"Org1MSP", "Org2MSP"};
+		String CAHOSTPORT = CAHOSTPORTs[ID-1];
+		String MSP = MSPs[ID-1];
+		String USERNAME = "appUser" + ID;
 		// Create a CA client for interacting with the CA.
 		Properties props = new Properties();
-		props.put("pemFile","../../test-network/organizations/peerOrganizations/org"+ ORG +".example.com/ca/ca.org" + ORG + ".example.com-cert.pem");		props.put("allowAllHostNames", "true");
+		props.put("pemFile","../../test-network/organizations/peerOrganizations/org"+ ID +".example.com/ca/ca.org" + ID + ".example.com-cert.pem");		props.put("allowAllHostNames", "true");
 		HFCAClient caClient = HFCAClient.createNewInstance("https://localhost:" + CAHOSTPORT, props);
 		CryptoSuite cryptoSuite = CryptoSuiteFactory.getDefault().getCryptoSuite();
 		caClient.setCryptoSuite(cryptoSuite);
 
 		// Create a wallet for managing identities
-		Wallet wallet = Wallets.newFileSystemWallet(Paths.get("wallet/org"+ ORG));
+		Wallet wallet = Wallets.newFileSystemWallet(Paths.get("wallet/org"+ ID));
 
 		// Check to see if we've already enrolled the user.
 		if (wallet.get(USERNAME) != null) {
@@ -70,7 +70,7 @@ public class RegisterUser {
 
 			@Override
 			public String getAffiliation() {
-				return "org"+ ORG + ".department1";
+				return "org"+ ID + ".department1";
 			}
 
 			@Override
@@ -98,7 +98,7 @@ public class RegisterUser {
 
 		// Register the user, enroll the user, and import the new identity into the wallet.
 		RegistrationRequest registrationRequest = new RegistrationRequest(USERNAME);
-		registrationRequest.setAffiliation("org" + ORG + ".department1");
+		registrationRequest.setAffiliation("org" + ID + ".department1");
 		registrationRequest.setEnrollmentID(USERNAME);
 		String enrollmentSecret = caClient.register(registrationRequest, admin);
 		Enrollment enrollment = caClient.enroll(USERNAME, enrollmentSecret);
